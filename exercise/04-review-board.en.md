@@ -34,7 +34,7 @@ Groups of 5 add a **security & privacy officer** (role card X). In groups of 3, 
 
 ## 3. Record the decision (8 min, together)
 
-**ADR reviewed:** `docs/adr/0002-…` (ADR-0002: Publish an `OrderPlaced` event to RabbitMQ for post-order actions) by Pitchanan Thaiphayak
+**ADR reviewed:** `docs/adr/0002-publish-order-events-via-rabbitmq.md` (ADR-0002: Publish an `OrderPlaced` event to RabbitMQ for post-order actions) by Pitchanan Thaiphayak
 **Board members and roles:** Pitchanan Thaiphayak (architect), Kotchapan (AI analyst), Pon (product owner), Piyapanchanok (SRE), Chayutphong Soisri (security & privacy officer)
 
 **Decision:** accept with changes (vote 5–0)
