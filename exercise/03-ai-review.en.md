@@ -17,4 +17,4 @@ The agent writes a one-page ATAM-style review to [`outputs/3-review.md`](outputs
 
 **Don't act on the review yet.** Read it, commit it, and bring it to the review board in Part B. The board will decide which of its findings matter.
 
-- **My first impression of the AI's review** (one sentence): …
+- **My first impression of the AI's review** (one sentence): The review was more useful than I expected: it agreed that RabbitMQ was a reasonable choice, but found real gaps I had missed, especially that the outbox write happens after payment so events can still be lost, and that the loyalty 1-minute deadline and the email backlog are not fully handled.

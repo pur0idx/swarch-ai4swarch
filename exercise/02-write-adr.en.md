@@ -33,10 +33,10 @@ requirement: <paste R-12 here>
 
 | Criterion | Run a | Run b |
 |---|---|---|
-| Uses the scenario's numbers (latency, peak, MailFast limits)? | | |
-| Options considered (list them) | | |
-| Handles "exactly once" loyalty points and MailFast's rate limit? How? | | |
-| Anything invented (a number, tool or fact not in the scenario)? | | |
+| Uses the scenario's numbers (latency, peak, MailFast limits)? | No: it had no scenario, so it lists volume, latency and MailFast limits as "Not given" (2a line 24, Open questions) | Yes: 500 ms p95 budget, 200 orders/s, MailFast p95 1.5 s / p99 8 s, 50 emails/s, points within 1 minute (2b lines 24–31) |
+| Options considered (list them) | A) synchronous direct calls, B) event-driven pub/sub with a generic broker, C) post-order orchestrator service | 1) synchronous gRPC (today), 2) in-process goroutines, 3) RabbitMQ events, 4) Kafka events |
+| Handles "exactly once" loyalty points and MailFast's rate limit? How? | Only generically: idempotent consumers keyed by order ID, retries with backoff and a DLQ (line 77–78); no rate figure, broker not named | Yes: loyalty is idempotent on order ID with a unique constraint (exactly-once *effect* over at-least-once delivery); email consumer throttled to ≤ 50 emails/s with retry and DLQ (lines 66–67); notes a backlog of approximately 150 emails/s at peak |
+| Anything invented (a number, tool or fact not in the scenario)? | No numbers invented; it chose pub/sub without knowing the team or constraints | Mostly grounded, but adds details not in the scenario: a 3-node cluster with quorum queues (line 85, 105), and a unique-constraint store for `loyaltyservice` |
 
 ## Take ownership: your final ADR
 
@@ -49,6 +49,6 @@ You will defend this ADR in front of a review board in Part B, so make sure you 
 
 | # | What you changed from the AI's draft | Why |
 |---|---|---|
-| 1 | | |
-| 2 | | |
-| 3 | | |
+| 1 | Replaced "publish after payment, log on failure" with a transactional outbox: `PlaceOrder` writes the order and an `OrderPlaced` row to a new order store in one transaction, and a relay publishes it to RabbitMQ. Added an outbox test to Validation. | A lost event means a customer silently misses loyalty points, which breaks the "exactly once" requirement. The AI left this as an open question; I decided it is not acceptable. Cost: a new order store and one extra DB write in `PlaceOrder`. |
+| 2 | Marked the email backlog (approximately 150 emails/s during the 11.11 peak) as an accepted consequence, and changed the open question to "what delay should trigger an alert". | R-12 says an order must never fail, not that the email must be instant. Queuing keeps MailFast under its 50 emails/s limit, so a delay during the peak is a fair trade-off. |
+| 3 | Removed "3-node cluster with quorum queues" from the risks and moved broker HA into Open questions. Filled in Deciders. | That setup is not in the scenario and I could not justify the size. With the outbox, orders and events survive a broker outage anyway, so HA is an operations decision, not part of this ADR. |

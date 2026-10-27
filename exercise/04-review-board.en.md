@@ -13,10 +13,11 @@ In groups of 4, choose **one** member's ADR to review (`docs/adr/0002-*.md`, plu
 
 | Role | Who | Brings |
 |---|---|---|
-| **Architect** | the ADR's author | defends the ADR |
-| **AI analyst** | | reads out the AI's review only, and may not add their own opinions |
-| **Product owner** | | role card P (business side) |
-| **Site reliability engineer (SRE)** | | role card S (operations side) |
+| **Architect** | Pitchanan Thaiphayak (the ADR's author) | defends the ADR |
+| **AI analyst** | Kotchapan | reads out the AI's review only, and may not add their own opinions |
+| **Product owner** | Pon | role card P (business side) |
+| **Site reliability engineer (SRE)** | Piyapanchanok | role card S (operations side) |
+| **Security & privacy officer** | Chayutphong Soisri | role card X (security & privacy) |
 
 Groups of 5 add a **security & privacy officer** (role card X). In groups of 3, the architect also plays the AI analyst.
 
@@ -33,28 +34,30 @@ Groups of 5 add a **security & privacy officer** (role card X). In groups of 3, 
 
 ## 3. Record the decision (8 min, together)
 
-**ADR reviewed:** `docs/adr/0002-…` by …
-**Board members and roles:** …
+**ADR reviewed:** `docs/adr/0002-…` (ADR-0002: Publish an `OrderPlaced` event to RabbitMQ for post-order actions) by Pitchanan Thaiphayak
+**Board members and roles:** Pitchanan Thaiphayak (architect), Kotchapan (AI analyst), Pon (product owner), Piyapanchanok (SRE), Chayutphong Soisri (security & privacy officer)
 
-**Decision:** accept / accept with changes / reject
+**Decision:** accept with changes (vote 5–0)
 
 **Required changes:**
-1. …
-2. …
-3. …
+1. **Clarify payment and outbox consistency.** Document the transaction boundaries between payment, order persistence and event publication, and define recovery and reconciliation if a failure occurs between these steps.
+2. **Specify delivery and recovery guarantees.** Document relay operation, retries, duplicate handling, dead-letter processing, monitoring and recovery, and validate that the system meets its workload and latency targets.
+3. **Define business-level service expectations.** Agree on acceptable email delays, backlog recovery, and the one-minute loyalty requirement during broker outages; support broker comparisons with evidence.
+4. **Add security and privacy requirements.** Minimize personal data in events; define broker authentication, authorization, connection protection, retention, and dead-letter queue access.
+5. **Validate the design before production.** Test peak throughput, broker outages, consumer failures, duplicate delivery and recovery behaviour.
 
 **Who raised what?** List every concern the board discussed.
 
 | # | Concern | Raised by (AI review / architect / PO / SRE / security) | Was it in the AI's review? | Could the AI have known? Why or why not? |
 |---|---|---|---|---|
-| 1 | | | | |
-| 2 | | | | |
-| 3 | | | | |
-| 4 | | | | |
-| 5 | | | | |
+| 1 | Payment may succeed without a durable event (payment-to-outbox boundary) | Architect and SRE | Yes | Yes: it can infer the consistency risk from the documented transaction boundary, but the correct recovery policy needs human agreement. |
+| 2 | Loyalty may miss its one-minute target during a broker outage | PO and SRE | Yes | Partly: it can identify the conflict, but business priorities and acceptable degradation need stakeholder decisions. |
+| 3 | Email backlog grows at peak (200 orders/s vs 50 emails/s, approximately 9,000 emails/min) | PO | Yes | Partly: it can calculate the backlog rate, but acceptable delay and peak duration need business confirmation. |
+| 4 | Broker comparison (RabbitMQ vs Kafka) claims may be unsupported | Architect | Yes | Yes: it can flag unsupported statements and ask for evidence. |
+| 5 | Personal data (customer emails) may be exposed or retained in queued events and dead-letter records | Security | No (not a main finding; the ADR only lists privacy as an open question) | Partly: it could flag the open question and suggest controls, but the organization's security and privacy requirements were not in its input. |
 
-**The AI's best finding** (one the humans had missed): …
-**The AI's weakest finding** (generic, wrong or irrelevant): …
+**The AI's best finding** (one the humans had missed): the payment-to-outbox consistency gap. It exposed a failure scenario the architecture must handle explicitly, and showed the board that having an outbox is not the same as guaranteeing that payment and event stay consistent.
+**The AI's weakest finding** (generic, wrong or irrelevant): the 30-minute peak example. The backlog calculation is useful, but the peak duration is an assumption, not a scenario requirement, and could mislead if read as one.
 
 ## 4. Individual reflection (≤ 150 words, each student, after class is fine)
 
